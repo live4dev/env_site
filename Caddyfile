@@ -1,0 +1,7 @@
+{$APP_HOST:localhost} {
+  encode gzip zstd
+  header {
+    X-Robots-Tag "noindex, nofollow"
+  }
+  reverse_proxy app:3000
+}

@@ -1,26 +1,227 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f7f5ef;
+  --foreground: #1f2523;
+  --muted: #67716d;
+  --panel: #ffffff;
+  --line: #d9ded8;
+  --accent: #216869;
+  --accent-2: #8b3a3a;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+:root.dark {
+  --background: #111412;
+  --foreground: #edf2ee;
+  --muted: #a9b4ae;
+  --panel: #1a201d;
+  --line: #334039;
+  --accent: #77c7bd;
+  --accent-2: #e49c73;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
+  margin: 0;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.prose {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+
+.prose > *:first-child {
+  margin-top: 0;
+}
+
+.prose > *:last-child {
+  margin-bottom: 0;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: var(--foreground);
+  font-weight: 700;
+  line-height: 1.22;
+  scroll-margin-top: 5rem;
+}
+
+.prose h1 {
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 2.1rem;
+  letter-spacing: 0;
+}
+
+.prose h2 {
+  margin-top: 2.4rem;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+  font-size: 1.55rem;
+}
+
+.prose h3 {
+  margin-top: 2rem;
+  margin-bottom: 0.65rem;
+  font-size: 1.25rem;
+}
+
+.prose h4 {
+  margin-top: 1.6rem;
+  margin-bottom: 0.55rem;
+  font-size: 1.08rem;
+}
+
+.prose h5,
+.prose h6 {
+  margin-top: 1.35rem;
+  margin-bottom: 0.45rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  text-transform: uppercase;
+}
+
+.prose p,
+.prose ul,
+.prose ol,
+.prose table,
+.prose pre,
+.prose blockquote {
+  margin-top: 0;
+  margin-bottom: 1.05rem;
+}
+
+.prose p {
+  max-width: 78ch;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.35rem;
+}
+
+.prose li {
+  margin: 0.28rem 0;
+  padding-left: 0.1rem;
+}
+
+.prose li > p {
+  margin: 0.35rem 0;
+}
+
+.prose blockquote {
+  max-width: 78ch;
+  border-left: 3px solid var(--accent);
+  padding: 0.15rem 0 0.15rem 1rem;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--line) 18%, transparent);
+}
+
+.prose code,
+.prose pre {
+  background: color-mix(in srgb, var(--line) 38%, transparent);
+  border-radius: 6px;
+}
+
+.prose code {
+  padding: 0.12rem 0.3rem;
+  font-size: 0.9em;
+}
+
+.prose pre {
+  overflow: auto;
+  border: 1px solid var(--line);
+  padding: 1rem 1.1rem;
+  line-height: 1.55;
+}
+
+.prose pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.prose table {
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.94rem;
+}
+
+.prose th,
+.prose td {
+  border: 1px solid var(--line);
+  padding: 0.55rem 0.7rem;
+  vertical-align: top;
+}
+
+.prose th {
+  background: color-mix(in srgb, var(--line) 32%, transparent);
+  font-weight: 650;
+  text-align: left;
+}
+
+.prose hr {
+  height: 1px;
+  border: 0;
+  margin: 2rem 0;
+  background: var(--line);
+}
+
+.heading-link {
+  color: var(--muted);
+  font-size: 0.72em;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.prose h1:hover .heading-link,
+.prose h2:hover .heading-link,
+.prose h3:hover .heading-link,
+.prose h4:hover .heading-link,
+.prose h5:hover .heading-link,
+.prose h6:hover .heading-link {
+  opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .prose {
+    font-size: 15.5px;
+  }
+
+  .prose h1 {
+    font-size: 1.75rem;
+  }
+
+  .prose h2 {
+    font-size: 1.35rem;
+  }
+
+  .prose h3 {
+    font-size: 1.15rem;
+  }
 }
