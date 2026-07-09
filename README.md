@@ -22,3 +22,41 @@ docker compose exec app npm run index:vault
 ```
 
 Chat uses the OpenAI-compatible `vsellm` endpoint configured by `VSELLM_BASE_URL`, `VSELLM_API_KEY`, and `CHAT_MODEL`.
+
+## GitHub Actions image deploy
+
+The production image is built by GitHub Actions and pushed to:
+
+```text
+ghcr.io/live4dev/env_site:latest
+```
+
+Required repository secrets:
+
+```text
+DEPLOY_HOST=23.88.51.68
+DEPLOY_USER=root
+DEPLOY_PORT=22
+DEPLOY_SSH_KEY=<private key with SSH access to the VPS>
+```
+
+If the GHCR package is private, also add:
+
+```text
+GHCR_USERNAME=live4dev
+GHCR_READ_TOKEN=<GitHub PAT with read:packages>
+```
+
+On push to `main`, the workflow builds and pushes the image, then runs on the VPS:
+
+```bash
+cd /srv/obsidian-vault-site
+docker compose pull app
+docker compose up -d app
+```
+
+For local image builds, use:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.local.yml up -d --build
+```

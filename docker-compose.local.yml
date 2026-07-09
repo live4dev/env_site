@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    image: env_site:local
+    ports:
+      - "3000:3000"
