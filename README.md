@@ -55,6 +55,16 @@ docker compose pull app
 docker compose up -d app
 ```
 
+## Upload vault data
+
+Upload the local Environment vault to the production vault mount and reindex the site:
+
+```bash
+npm run upload:vault -- --host 23.88.51.68 --user root
+```
+
+Use `--dry-run` before the first upload to preview the transfer. Add `--delete` when you want the remote `/srv/obsidian-vault` mirror to remove files that no longer exist locally. The script uses `VAULT_EXCLUDE_GLOBS` by default, including private folders such as `10_Я/**` and `40_Люди/**`.
+
 For local image builds, use:
 
 ```bash
