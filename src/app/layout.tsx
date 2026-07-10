@@ -22,6 +22,10 @@ const nav = [
   ["/status", "Статус"],
 ];
 
+const adminNav = [
+  ["/admin/users", "Пользователи"],
+];
+
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getSessionUser();
   return (
@@ -36,7 +40,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                   Vault
                 </Link>
                 <nav className="flex flex-1 gap-1 overflow-x-auto text-sm">
-                  {nav.map(([href, label]) => (
+                  {[...nav, ...(user.role === "admin" ? adminNav : [])].map(([href, label]) => (
                     <Link key={href} href={href} className="rounded-md px-3 py-2 text-[var(--muted)] hover:bg-[var(--line)] hover:text-[var(--foreground)] hover:no-underline">
                       {label}
                     </Link>
