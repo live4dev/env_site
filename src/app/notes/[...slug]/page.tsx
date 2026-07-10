@@ -25,7 +25,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <article>
-        <PageHeader title={note.title} description={note.vaultPath} action={<button className="rounded-md border border-[var(--line)] px-3 py-2 text-sm" data-copy-url>Скопировать ссылку</button>} />
+        <PageHeader title={note.title} description={<VaultPathBreadcrumbs vaultPath={note.vaultPath} />} action={<button className="rounded-md border border-[var(--line)] px-3 py-2 text-sm" data-copy-url>Скопировать ссылку</button>} />
         <div className="prose max-w-none rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5" dangerouslySetInnerHTML={{ __html: note.renderedHtml }} />
       </article>
       <aside className="grid content-start gap-4">
@@ -77,6 +77,30 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
         </Panel>
       </aside>
     </div>
+  );
+}
+
+function VaultPathBreadcrumbs({ vaultPath }: { vaultPath: string }) {
+  const parts = vaultPath.split("/");
+  const fileName = parts.at(-1) ?? vaultPath;
+  const folders = parts.slice(0, -1);
+
+  return (
+    <nav aria-label="Путь заметки" className="mt-2 flex max-w-3xl flex-wrap items-center gap-1 text-sm text-[var(--muted)]">
+      {folders.map((part, index) => {
+        const href = `/folders/${folders.slice(0, index + 1).map(encodeURIComponent).join("/")}`;
+        return (
+          <span key={href} className="inline-flex items-center gap-1">
+            {index > 0 ? <span className="text-[var(--line)]">/</span> : null}
+            <Link href={href} className="rounded px-1 py-0.5 text-[var(--accent)] hover:bg-[var(--line)] hover:no-underline">
+              {part}
+            </Link>
+          </span>
+        );
+      })}
+      {folders.length > 0 ? <span className="text-[var(--line)]">/</span> : null}
+      <span className="rounded px-1 py-0.5 font-medium text-[var(--foreground)]">{fileName}</span>
+    </nav>
   );
 }
 
