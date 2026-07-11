@@ -34,6 +34,8 @@ services:
   proxy:
     image: caddy:2
     restart: unless-stopped
+    environment:
+      APP_HOST: ${APP_HOST:-:80}
     ports:
       - "8080:80"
       - "8443:443"
