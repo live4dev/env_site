@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth/session";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { ThemeScript } from "@/components/layout/theme-script";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -49,6 +50,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
                 <Link href="/settings" className="hidden rounded-md border border-[var(--line)] px-3 py-2 text-sm text-[var(--foreground)] hover:no-underline sm:block">
                   {user.displayName}
                 </Link>
+                <ThemeToggle />
               </div>
             </header>
             <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>

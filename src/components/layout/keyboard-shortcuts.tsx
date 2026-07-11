@@ -19,6 +19,7 @@ export function KeyboardShortcuts() {
         const next = root.classList.contains("dark") ? "light" : "dark";
         localStorage.setItem("theme", next);
         root.classList.toggle("dark", next === "dark");
+        window.dispatchEvent(new CustomEvent("themechange", { detail: next }));
       }
       if (event.key === "g" && !typing) {
         if (g) {
