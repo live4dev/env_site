@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { noteChunks, noteLinks, notes } from "@/lib/db/schema";
 import { PageHeader, Panel } from "@/components/ui";
 import { slugFromRouteSegments } from "@/lib/notes/slug";
+import { MermaidRenderer } from "@/components/notes/mermaid-renderer";
 
 export default async function NotePage({ params }: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await params;
@@ -30,6 +31,7 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
         <div className="prose max-w-none rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5">
           {description ? <p className="text-lg text-[var(--muted)]">{description}</p> : null}
           <div dangerouslySetInnerHTML={{ __html: note.renderedHtml }} />
+          <MermaidRenderer />
         </div>
       </article>
       <aside className="grid content-start gap-4">

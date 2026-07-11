@@ -163,6 +163,25 @@ a:hover {
   background: transparent;
 }
 
+.mermaid-diagram {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  margin-bottom: 1.05rem;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--line) 14%, transparent);
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-diagram[data-mermaid-error="true"] {
+  white-space: pre-wrap;
+  color: var(--accent-2);
+}
+
 .prose table {
   width: 100%;
   display: block;
