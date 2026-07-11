@@ -21,12 +21,16 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
     .limit(50);
   const similar = await db.select().from(notes).where(and(eq(notes.published, true), or(eq(notes.type, note.type ?? ""), eq(notes.status, note.status ?? "")))).limit(6);
   const chunks = await db.select().from(noteChunks).where(eq(noteChunks.noteId, note.id)).limit(20);
+  const description = frontmatterDescription(note.frontmatterJson);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <article>
         <PageHeader title={note.title} description={<VaultPathBreadcrumbs vaultPath={note.vaultPath} />} action={<button className="rounded-md border border-[var(--line)] px-3 py-2 text-sm" data-copy-url>Скопировать ссылку</button>} />
-        <div className="prose max-w-none rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5" dangerouslySetInnerHTML={{ __html: note.renderedHtml }} />
+        <div className="prose max-w-none rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5">
+          {description ? <p className="text-lg text-[var(--muted)]">{description}</p> : null}
+          <div dangerouslySetInnerHTML={{ __html: note.renderedHtml }} />
+        </div>
       </article>
       <aside className="grid content-start gap-4">
         <Panel>
@@ -105,8 +109,13 @@ function VaultPathBreadcrumbs({ vaultPath }: { vaultPath: string }) {
 }
 
 function frontmatterEntries(frontmatter: Record<string, unknown>) {
-  const hidden = new Set(["tags", "sources", "published", "created", "updated", "source_path", "ingested"]);
+  const hidden = new Set(["tags", "sources", "published", "created", "updated", "source_path", "ingested", "description"]);
   return Object.entries(frontmatter).filter(([key, value]) => !hidden.has(key) && value !== null && value !== undefined && value !== "");
+}
+
+function frontmatterDescription(frontmatter: Record<string, unknown>) {
+  const description = frontmatter.description;
+  return typeof description === "string" && description.trim() ? description.trim() : null;
 }
 
 function attributeLabel(key: string) {
