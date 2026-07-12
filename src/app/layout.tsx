@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { asc } from "drizzle-orm";
 import { getSessionUser } from "@/lib/auth/session";
+import { db } from "@/lib/db";
+import { notes } from "@/lib/db/schema";
+import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { ThemeScript } from "@/components/layout/theme-script";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,48 +15,17 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const nav = [
-  ["/", "Обзор"],
-  ["/search", "Поиск"],
-  ["/chat", "Вопросы"],
-  ["/graph", "Граф"],
-  ["/inputs", "Inputs"],
-  ["/sources", "Источники"],
-  ["/tags", "Теги"],
-  ["/status", "Статус"],
-];
-
-const adminNav = [
-  ["/admin/users", "Пользователи"],
-];
-
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getSessionUser();
+  const folderRows = user ? await db.selectDistinct({ folder: notes.folder }).from(notes).where(visibleNotesFilter(canAccessRaw(user))).orderBy(asc(notes.folder)).limit(1000) : [];
   return (
     <html lang="ru" suppressHydrationWarning>
       <body>
         <ThemeScript />
         {user ? (
-          <div className="min-h-screen">
-            <header className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--background)]/95 backdrop-blur">
-              <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3">
-                <Link href="/" className="shrink-0 text-sm font-bold uppercase tracking-[0.18em] text-[var(--foreground)]">
-                  Vault
-                </Link>
-                <nav className="flex flex-1 gap-1 overflow-x-auto text-sm">
-                  {[...nav, ...(user.role === "admin" ? adminNav : [])].map(([href, label]) => (
-                    <Link key={href} href={href} className="rounded-md px-3 py-2 text-[var(--muted)] hover:bg-[var(--line)] hover:text-[var(--foreground)] hover:no-underline">
-                      {label}
-                    </Link>
-                  ))}
-                </nav>
-                <Link href="/settings" className="hidden rounded-md border border-[var(--line)] px-3 py-2 text-sm text-[var(--foreground)] hover:no-underline sm:block">
-                  {user.displayName}
-                </Link>
-                <ThemeToggle />
-              </div>
-            </header>
-            <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+          <div className="min-h-screen lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
+            <AppSidebar folders={folderRows.map((row) => row.folder).filter(Boolean)} user={user} />
+            <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl">{children}</div></main>
             <KeyboardShortcuts />
           </div>
         ) : (

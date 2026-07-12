@@ -13,6 +13,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
       email: users.email,
       displayName: users.displayName,
       role: users.role,
+      canAccessRaw: users.canAccessRaw,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastLoginAt: users.lastLoginAt,
@@ -24,6 +25,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     <>
       <PageHeader title="Пользователи" description="Создание учетных записей и список пользователей приложения." />
       {params.created ? <StatusMessage tone="ok">Пользователь создан.</StatusMessage> : null}
+      {params.updated ? <StatusMessage tone="ok">Доступ к Raw обновлён.</StatusMessage> : null}
       {params.error ? <StatusMessage tone="error">{decodeError(params.error)}</StatusMessage> : null}
       <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
         <Panel>
@@ -32,6 +34,10 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
             <label className="grid gap-1 text-sm">
               <span className="text-[var(--muted)]">Email</span>
               <input name="email" type="email" required className="rounded-md border border-[var(--line)] bg-[var(--background)] px-3 py-2" placeholder="user@example.com" />
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input name="canAccessRaw" type="checkbox" value="true" />
+              <span>Разрешить доступ к Raw</span>
             </label>
             <label className="grid gap-1 text-sm">
               <span className="text-[var(--muted)]">Имя</span>
@@ -60,6 +66,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                   <th className="py-2 pr-3 font-medium">Email</th>
                   <th className="py-2 pr-3 font-medium">Имя</th>
                   <th className="py-2 pr-3 font-medium">Роль</th>
+                  <th className="py-2 pr-3 font-medium">Raw</th>
                   <th className="py-2 pr-3 font-medium">Создан</th>
                   <th className="py-2 pr-3 font-medium">Последний вход</th>
                 </tr>
@@ -70,6 +77,18 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
                     <td className="py-2 pr-3">{user.email}</td>
                     <td className="py-2 pr-3">{user.displayName}</td>
                     <td className="py-2 pr-3">{user.role}</td>
+                    <td className="py-2 pr-3">
+                      {user.role === "admin" ? <span>Всегда</span> : (
+                        <form action="/api/admin/users" method="post" className="flex items-center gap-2">
+                          <input type="hidden" name="action" value="raw-access" />
+                          <input type="hidden" name="userId" value={user.id} />
+                          <input type="hidden" name="canAccessRaw" value={user.canAccessRaw ? "false" : "true"} />
+                          <button className="rounded-md border border-[var(--line)] px-2 py-1">
+                            {user.canAccessRaw ? "Разрешён" : "Запрещён"}
+                          </button>
+                        </form>
+                      )}
+                    </td>
                     <td className="py-2 pr-3">{formatDate(user.createdAt)}</td>
                     <td className="py-2 pr-3">{formatDate(user.lastLoginAt)}</td>
                   </tr>

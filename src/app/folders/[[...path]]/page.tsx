@@ -1,13 +1,19 @@
 import Link from "next/link";
-import { and, asc, eq, ilike } from "drizzle-orm";
+import { and, asc, ilike } from "drizzle-orm";
 import { PageHeader, Panel } from "@/components/ui";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { slugFromRouteSegments } from "@/lib/notes/slug";
+import { requireUser } from "@/lib/auth/session";
+import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
+import { notFound } from "next/navigation";
 
 export default async function FolderPage({ params }: { params: Promise<{ path?: string[] }> }) {
   const { path = [] } = await params;
   const folder = slugFromRouteSegments(path);
+  const user = await requireUser();
+  const rawAllowed = canAccessRaw(user);
+  if (/^raw(?:\/|$)/i.test(folder) && !rawAllowed) notFound();
   const title = folder || "Все папки";
   const rows = await db
     .select({
@@ -21,7 +27,7 @@ export default async function FolderPage({ params }: { params: Promise<{ path?: 
       updatedDate: notes.updatedDate,
     })
     .from(notes)
-    .where(and(eq(notes.published, true), folder ? ilike(notes.vaultPath, `${folder}/%`) : undefined))
+    .where(and(visibleNotesFilter(rawAllowed), folder ? ilike(notes.vaultPath, `${folder}/%`) : undefined))
     .orderBy(asc(notes.vaultPath))
     .limit(1000);
 

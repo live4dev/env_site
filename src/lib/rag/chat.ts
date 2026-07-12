@@ -16,8 +16,8 @@ Do not claim that a source says something unless the supplied context supports i
 
 Be concise, structured, and practical.`;
 
-export async function answerFromVault(question: string) {
-  const chunks = await retrieveChunks(question, env.MAX_CHAT_CONTEXT_CHUNKS);
+export async function answerFromVault(question: string, rawAllowed = false) {
+  const chunks = await retrieveChunks(question, env.MAX_CHAT_CONTEXT_CHUNKS, rawAllowed);
   const sources = chunks.map((chunk) => ({
     id: chunk.id,
     title: chunk.title,

@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   if (!user || !(await argon2.verify(user.passwordHash, String(password)))) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
-  await createSession({ id: user.id, email: user.email, displayName: user.displayName, role: user.role });
+  await createSession({ id: user.id, email: user.email, displayName: user.displayName, role: user.role, canAccessRaw: user.canAccessRaw });
   await db.update(users).set({ lastLoginAt: new Date(), updatedAt: new Date() }).where(eq(users.id, user.id));
   return NextResponse.json({ ok: true });
 }

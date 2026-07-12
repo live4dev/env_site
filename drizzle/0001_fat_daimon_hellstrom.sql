@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "can_access_raw" boolean DEFAULT false NOT NULL;

@@ -6,11 +6,15 @@ import { noteChunks, noteLinks, notes } from "@/lib/db/schema";
 import { PageHeader, Panel } from "@/components/ui";
 import { slugFromRouteSegments } from "@/lib/notes/slug";
 import { MermaidRenderer } from "@/components/notes/mermaid-renderer";
+import { requireUser } from "@/lib/auth/session";
+import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
 
 export default async function NotePage({ params }: { params: Promise<{ slug: string[] }> }) {
+  const user = await requireUser();
+  const rawAllowed = canAccessRaw(user);
   const { slug } = await params;
   const normalizedSlug = slugFromRouteSegments(slug);
-  const [note] = await db.select().from(notes).where(and(eq(notes.slug, normalizedSlug), eq(notes.published, true))).limit(1);
+  const [note] = await db.select().from(notes).where(and(eq(notes.slug, normalizedSlug), visibleNotesFilter(rawAllowed))).limit(1);
   if (!note) notFound();
 
   const outgoing = await db.select().from(noteLinks).where(eq(noteLinks.sourceNoteId, note.id)).limit(50);
@@ -18,9 +22,9 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
     .select({ link: noteLinks, source: notes })
     .from(noteLinks)
     .innerJoin(notes, eq(noteLinks.sourceNoteId, notes.id))
-    .where(eq(noteLinks.targetNoteId, note.id))
+    .where(and(eq(noteLinks.targetNoteId, note.id), visibleNotesFilter(rawAllowed)))
     .limit(50);
-  const similar = await db.select().from(notes).where(and(eq(notes.published, true), or(eq(notes.type, note.type ?? ""), eq(notes.status, note.status ?? "")))).limit(6);
+  const similar = await db.select().from(notes).where(and(visibleNotesFilter(rawAllowed), or(eq(notes.type, note.type ?? ""), eq(notes.status, note.status ?? "")))).limit(6);
   const chunks = await db.select().from(noteChunks).where(eq(noteChunks.noteId, note.id)).limit(20);
   const description = frontmatterDescription(note.frontmatterJson);
 

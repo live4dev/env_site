@@ -1,10 +1,12 @@
-import { eq } from "drizzle-orm";
 import { PageHeader, Panel } from "@/components/ui";
 import { db } from "@/lib/db";
 import { indexRuns, notes } from "@/lib/db/schema";
+import { requireUser } from "@/lib/auth/session";
+import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
 
 export default async function StatusPage() {
-  const rows = await db.select().from(notes).where(eq(notes.published, true)).limit(5000);
+  const user = await requireUser();
+  const rows = await db.select().from(notes).where(visibleNotesFilter(canAccessRaw(user))).limit(5000);
   const runs = await db.select().from(indexRuns).limit(10);
   const byStatus = rows.reduce<Record<string, number>>((acc, note) => {
     const key = note.status ?? "без статуса";

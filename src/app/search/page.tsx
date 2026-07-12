@@ -1,7 +1,10 @@
 import { searchNotes } from "@/lib/search";
 import { NoteLink, PageHeader, Panel } from "@/components/ui";
+import { requireUser } from "@/lib/auth/session";
+import { canAccessRaw } from "@/lib/notes/access";
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const user = await requireUser();
   const params = await searchParams;
   const results = await searchNotes({
     q: params.q,
@@ -10,6 +13,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     dateFrom: params.dateFrom,
     dateTo: params.dateTo,
     sources: params.sources,
+    rawAllowed: canAccessRaw(user),
   });
 
   return (

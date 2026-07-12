@@ -2,6 +2,7 @@ import { and, desc, eq, gte, ilike, lte, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { noteChunks, notes } from "@/lib/db/schema";
 import { embedText } from "@/lib/rag/embeddings";
+import { visibleNotesFilter } from "@/lib/notes/access";
 
 export type SearchMode = "keyword" | "semantic" | "hybrid";
 
@@ -13,10 +14,11 @@ export async function searchNotes(params: {
   dateTo?: string;
   sources?: string;
   limit?: number;
+  rawAllowed?: boolean;
 }) {
   const limit = params.limit ?? 20;
   const filters = [
-    eq(notes.published, true),
+    visibleNotesFilter(params.rawAllowed ?? false),
     params.status ? eq(notes.status, params.status) : undefined,
     params.dateFrom ? gte(notes.updatedDate, new Date(params.dateFrom)) : undefined,
     params.dateTo ? lte(notes.updatedDate, new Date(params.dateTo)) : undefined,
@@ -51,7 +53,7 @@ export async function searchNotes(params: {
   }));
 }
 
-export async function retrieveChunks(question: string, limit = 8) {
+export async function retrieveChunks(question: string, limit = 8, rawAllowed = false) {
   const q = question.trim();
   const embedding = await embedText(q);
   if (embedding) {
@@ -69,7 +71,7 @@ export async function retrieveChunks(question: string, limit = 8) {
       })
       .from(noteChunks)
       .innerJoin(notes, eq(noteChunks.noteId, notes.id))
-      .where(and(eq(notes.published, true), sql`${noteChunks.embedding} IS NOT NULL`))
+      .where(and(visibleNotesFilter(rawAllowed), sql`${noteChunks.embedding} IS NOT NULL`))
       .orderBy(sql`${noteChunks.embedding} <-> ${vector}::vector`)
       .limit(limit);
   }
@@ -86,7 +88,7 @@ export async function retrieveChunks(question: string, limit = 8) {
     })
     .from(noteChunks)
     .innerJoin(notes, eq(noteChunks.noteId, notes.id))
-    .where(and(eq(notes.published, true), q ? sql`to_tsvector('simple', ${noteChunks.content}) @@ plainto_tsquery('simple', ${q})` : undefined))
+    .where(and(visibleNotesFilter(rawAllowed), q ? sql`to_tsvector('simple', ${noteChunks.content}) @@ plainto_tsquery('simple', ${q})` : undefined))
     .limit(limit);
 
   if (rows.length > 0 || !q) return rows;
@@ -104,7 +106,7 @@ export async function retrieveChunks(question: string, limit = 8) {
     })
     .from(noteChunks)
     .innerJoin(notes, eq(noteChunks.noteId, notes.id))
-    .where(and(eq(notes.published, true), ilike(noteChunks.content, `%${q}%`)))
+    .where(and(visibleNotesFilter(rawAllowed), ilike(noteChunks.content, `%${q}%`)))
     .limit(limit);
 }
 

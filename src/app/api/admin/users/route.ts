@@ -12,6 +12,13 @@ const createUserSchema = z.object({
   displayName: z.string().trim().min(1),
   password: z.string().min(8),
   role: z.enum(["admin", "user"]).default("user"),
+  canAccessRaw: z.preprocess((value) => value === true || value === "true", z.boolean()).default(false),
+});
+
+const rawAccessSchema = z.object({
+  action: z.literal("raw-access"),
+  userId: z.string().uuid(),
+  canAccessRaw: z.preprocess((value) => value === true || value === "true", z.boolean()),
 });
 
 export async function GET() {
@@ -22,6 +29,7 @@ export async function GET() {
       email: users.email,
       displayName: users.displayName,
       role: users.role,
+      canAccessRaw: users.canAccessRaw,
       createdAt: users.createdAt,
       updatedAt: users.updatedAt,
       lastLoginAt: users.lastLoginAt,
@@ -40,6 +48,11 @@ export async function POST(request: Request) {
   }
 
   const payload = await parsePayload(request);
+  const rawAccess = rawAccessSchema.safeParse(payload);
+  if (rawAccess.success) {
+    await db.update(users).set({ canAccessRaw: rawAccess.data.canAccessRaw, updatedAt: new Date() }).where(eq(users.id, rawAccess.data.userId));
+    return NextResponse.redirect(new URL("/admin/users?updated=1", env.APP_BASE_URL), 303);
+  }
   const parsed = createUserSchema.safeParse(payload);
   if (!parsed.success) return redirectWithError("invalid", 303);
 
@@ -51,6 +64,7 @@ export async function POST(request: Request) {
     email: parsed.data.email,
     displayName: parsed.data.displayName,
     role: parsed.data.role,
+    canAccessRaw: parsed.data.canAccessRaw,
     passwordHash,
   });
 

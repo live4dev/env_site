@@ -8,7 +8,7 @@ import { users, type User } from "@/lib/db/schema";
 export const sessionCookie = "vault_session";
 const key = new TextEncoder().encode(env.AUTH_SECRET);
 
-export type SessionUser = Pick<User, "id" | "email" | "displayName" | "role">;
+export type SessionUser = Pick<User, "id" | "email" | "displayName" | "role" | "canAccessRaw">;
 
 export async function createSession(user: SessionUser) {
   const token = await new SignJWT(user)
@@ -41,6 +41,7 @@ export async function verifySessionToken(token?: string): Promise<SessionUser | 
       email: String(payload.email),
       displayName: String(payload.displayName),
       role: payload.role === "admin" ? "admin" : "user",
+      canAccessRaw: payload.canAccessRaw === true,
     };
   } catch {
     return null;
@@ -49,7 +50,17 @@ export async function verifySessionToken(token?: string): Promise<SessionUser | 
 
 export async function getSessionUser() {
   const cookieStore = await cookies();
-  return verifySessionToken(cookieStore.get(sessionCookie)?.value);
+  const session = await verifySessionToken(cookieStore.get(sessionCookie)?.value);
+  if (!session) return null;
+  const user = await refreshUserFromDb(session.id);
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email,
+    displayName: user.displayName,
+    role: user.role,
+    canAccessRaw: user.canAccessRaw,
+  } satisfies SessionUser;
 }
 
 export async function requireUser() {

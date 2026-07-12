@@ -1,13 +1,17 @@
 import Link from "next/link";
-import { desc, eq, ilike } from "drizzle-orm";
+import { and, desc, ilike } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { notes } from "@/lib/db/schema";
 import { NoteLink, PageHeader, Panel } from "@/components/ui";
+import { requireUser } from "@/lib/auth/session";
+import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
 
 export default async function Dashboard() {
-  const recent = await db.select().from(notes).where(eq(notes.published, true)).orderBy(desc(notes.updatedDate), desc(notes.indexedAt)).limit(10);
-  const maps = await db.select().from(notes).where(ilike(notes.vaultPath, "%Map%")).limit(6);
-  const counts = await db.select({ type: notes.type }).from(notes).where(eq(notes.published, true)).limit(5000);
+  const user = await requireUser();
+  const visible = visibleNotesFilter(canAccessRaw(user));
+  const recent = await db.select().from(notes).where(visible).orderBy(desc(notes.updatedDate), desc(notes.indexedAt)).limit(10);
+  const maps = await db.select().from(notes).where(and(visible, ilike(notes.vaultPath, "%Map%"))).limit(6);
+  const counts = await db.select({ type: notes.type }).from(notes).where(visible).limit(5000);
   const byType = counts.reduce<Record<string, number>>((acc, item) => {
     const key = item.type ?? "без типа";
     acc[key] = (acc[key] ?? 0) + 1;

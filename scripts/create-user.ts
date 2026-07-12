@@ -13,14 +13,15 @@ async function main() {
   const role = arg("role", "user") as "admin" | "user";
   const displayName = arg("display-name", email);
   const password = arg("password") ?? process.env.USER_PASSWORD;
+  const canAccessRaw = arg("raw-access", "false") === "true";
   if (!email || !password) throw new Error("Usage: npm run user:create -- --email user@example.com --password 'secret' --role user");
   const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
   const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (existing) {
-    await db.update(users).set({ passwordHash, role, displayName: displayName ?? email, updatedAt: new Date() }).where(eq(users.id, existing.id));
+    await db.update(users).set({ passwordHash, role, canAccessRaw, displayName: displayName ?? email, updatedAt: new Date() }).where(eq(users.id, existing.id));
     console.log(`updated ${email}`);
   } else {
-    await db.insert(users).values({ email, passwordHash, role, displayName: displayName ?? email });
+    await db.insert(users).values({ email, passwordHash, role, canAccessRaw, displayName: displayName ?? email });
     console.log(`created ${email}`);
   }
   await queryClient.end();

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { chatMessages, chatSessions } from "@/lib/db/schema";
 import { requireUser } from "@/lib/auth/session";
 import { answerFromVault } from "@/lib/rag/chat";
+import { canAccessRaw } from "@/lib/notes/access";
 
 export async function POST(request: Request) {
   const user = await requireUser();
@@ -14,7 +15,7 @@ export async function POST(request: Request) {
     : await db.insert(chatSessions).values({ userId: user.id, title: String(question).slice(0, 80) }).returning({ id: chatSessions.id });
 
   await db.insert(chatMessages).values({ sessionId: session.id, userId: user.id, role: "user", content: String(question) });
-  const result = await answerFromVault(String(question));
+  const result = await answerFromVault(String(question), canAccessRaw(user));
   await db.insert(chatMessages).values({
     sessionId: session.id,
     userId: user.id,
