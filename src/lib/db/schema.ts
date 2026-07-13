@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, integer, jsonb, pgTable, text, timestamp, uuid, vector } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid, vector } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -47,6 +47,21 @@ export const noteLinks = pgTable("note_links", {
   heading: text("heading"),
   isResolved: boolean("is_resolved").notNull().default(false),
 });
+
+export const userNoteStates = pgTable("user_note_states", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  noteId: uuid("note_id").notNull().references(() => notes.id, { onDelete: "cascade" }),
+  saved: boolean("saved").notNull().default(false),
+  readLater: boolean("read_later").notNull().default(false),
+  lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  userNoteIdx: uniqueIndex("user_note_states_user_note_idx").on(table.userId, table.noteId),
+  userSavedIdx: index("user_note_states_user_saved_idx").on(table.userId, table.saved),
+  userReadLaterIdx: index("user_note_states_user_read_later_idx").on(table.userId, table.readLater),
+}));
 
 export const noteChunks = pgTable("note_chunks", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -101,3 +116,4 @@ export const indexRuns = pgTable("index_runs", {
 
 export type User = typeof users.$inferSelect;
 export type Note = typeof notes.$inferSelect;
+export type UserNoteState = typeof userNoteStates.$inferSelect;

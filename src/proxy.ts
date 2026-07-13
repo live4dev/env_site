@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
-import { sessionCookie } from "@/lib/auth/session";
+import { sessionCookie } from "@/lib/auth/constants";
 
 const publicPaths = ["/login", "/robots.txt", "/favicon.ico", "/api/auth/login"];
 const staticPrefixes = ["/_next", "/images", "/public"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const responseHeaders = new Headers(request.headers);
   const response = NextResponse.next({ request: { headers: responseHeaders } });

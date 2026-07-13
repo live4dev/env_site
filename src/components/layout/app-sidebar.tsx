@@ -39,13 +39,13 @@ export function AppSidebar({ folders, user }: { folders: string[]; user: Sidebar
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4">
-        <form action="/search" className="mb-5">
-          <label className="flex items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--background)] px-3 py-2 text-sm focus-within:border-[var(--accent)]">
+        <div className="mb-5">
+          <button type="button" onClick={() => window.dispatchEvent(new Event("vault:command"))} className="flex w-full items-center gap-2 rounded-lg border border-[var(--line)] bg-[var(--background)] px-3 py-2 text-left text-sm hover:border-[var(--accent)]">
             <SearchIcon />
-            <input data-global-search name="q" className="min-w-0 flex-1 bg-transparent outline-none" placeholder="Поиск по базе…" />
-            <kbd className="rounded border border-[var(--line)] px-1.5 py-0.5 text-[10px] text-[var(--muted)]">/</kbd>
-          </label>
-        </form>
+            <span className="min-w-0 flex-1 text-[var(--muted)]">Поиск и команды…</span>
+            <kbd className="rounded border border-[var(--line)] px-1.5 py-0.5 text-[10px] text-[var(--muted)]">⌘K</kbd>
+          </button>
+        </div>
 
         <NavGroup label="Рабочее">
           <NavLink href="/" label="Обзор" icon={<HomeIcon />} active={pathname === "/"} />

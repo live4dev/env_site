@@ -4,8 +4,9 @@ import { eq } from "drizzle-orm";
 import { env } from "@/lib/config";
 import { db } from "@/lib/db";
 import { users, type User } from "@/lib/db/schema";
+import { sessionCookie } from "@/lib/auth/constants";
 
-export const sessionCookie = "vault_session";
+export { sessionCookie } from "@/lib/auth/constants";
 const key = new TextEncoder().encode(env.AUTH_SECRET);
 
 export type SessionUser = Pick<User, "id" | "email" | "displayName" | "role" | "canAccessRaw">;

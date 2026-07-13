@@ -6,6 +6,7 @@ import { notes } from "@/lib/db/schema";
 import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
+import { CommandPalette } from "@/components/layout/command-palette";
 import { ThemeScript } from "@/components/layout/theme-script";
 import "./globals.css";
 
@@ -27,6 +28,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
             <AppSidebar folders={folderRows.map((row) => row.folder).filter(Boolean)} user={user} />
             <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl">{children}</div></main>
             <KeyboardShortcuts />
+            <CommandPalette />
           </div>
         ) : (
           children

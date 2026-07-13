@@ -4,8 +4,8 @@ import { useState } from "react";
 
 type Source = { title: string; url: string; heading?: string };
 
-export function ChatClient() {
-  const [question, setQuestion] = useState("");
+export function ChatClient({ initialQuestion = "" }: { initialQuestion?: string }) {
+  const [question, setQuestion] = useState(initialQuestion);
   const [answer, setAnswer] = useState("");
   const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(false);

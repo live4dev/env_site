@@ -1,0 +1,2 @@
+- [ ] Add a GitHub-style activity map to the input page.
+- [ ] Move the URL on the inputs page to the content area.

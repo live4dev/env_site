@@ -12,7 +12,7 @@ export function KeyboardShortcuts() {
       const typing = ["INPUT", "TEXTAREA"].includes(target.tagName) || target.isContentEditable;
       if (event.key === "/" && !typing) {
         event.preventDefault();
-        document.querySelector<HTMLInputElement>("[data-global-search]")?.focus();
+        window.dispatchEvent(new Event("vault:command"));
       }
       if (event.key === "t" && !typing) {
         const root = document.documentElement;
