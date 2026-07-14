@@ -54,6 +54,7 @@ export function AppSidebar({ folders, user }: { folders: string[]; user: Sidebar
 
         <NavGroup label="Хранилище">
           <NavLink href="/inputs" label="Входящие" meta="Inputs" icon={<FolderIcon />} active={isActive(pathname, "/inputs")} />
+          <NavLink href="/folders/wiki" label="Знания" meta="Wiki" icon={<FolderIcon />} active={isActive(pathname, "/folders/wiki")} />
           <NavLink href="/outputs" label="Результаты" meta="Outputs" icon={<FolderIcon />} active={isActive(pathname, "/outputs")} />
           {user.role === "admin" || user.canAccessRaw ? <NavLink href="/raw" label="Исходники" meta="Raw" icon={<LockIcon />} active={isActive(pathname, "/raw")} /> : null}
           <details className="group/tree mt-1" open>
@@ -113,7 +114,7 @@ function TreeNode({ node, pathname }: { node: FolderNode; pathname: string }) {
 
 function buildFolderTree(folders: string[]) {
   const roots: FolderNode[] = [];
-  const pinned = new Set(["inputs", "outputs", "raw"]);
+  const pinned = new Set(["inputs", "wiki", "outputs", "raw"]);
   for (const folder of folders) {
     const parts = folder.split("/").filter(Boolean);
     if (!parts.length || pinned.has(parts[0].toLowerCase())) continue;
