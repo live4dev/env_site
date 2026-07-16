@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { copyText } from "@/lib/browser/copy-text";
 import type { DashboardNote } from "@/lib/dashboard";
 
 export function FeedCard({ item }: { item: DashboardNote }) {
@@ -34,9 +35,9 @@ export function FeedCard({ item }: { item: DashboardNote }) {
   }
 
   async function copyLink() {
-    await navigator.clipboard.writeText(`${window.location.origin}/notes/${item.slug}`);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1400);
+    const copied = await copyText(`${window.location.origin}/notes/${item.slug}`);
+    setCopied(copied);
+    if (copied) window.setTimeout(() => setCopied(false), 1400);
   }
 
   const updated = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(item.updatedAt));

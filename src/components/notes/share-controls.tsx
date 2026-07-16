@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { copyText } from "@/lib/browser/copy-text";
 
 type ShareResponse = {
   sharePath?: string;
@@ -112,25 +113,4 @@ function StatusMessage({ message, error }: { message: string; error: string }) {
 
 function absoluteUrl(path: string) {
   return new URL(path, window.location.origin).toString();
-}
-
-async function copyText(value: string) {
-  try {
-    if (navigator.clipboard) {
-      await navigator.clipboard.writeText(value);
-      return true;
-    }
-
-    const input = document.createElement("textarea");
-    input.value = value;
-    input.style.position = "fixed";
-    input.style.opacity = "0";
-    document.body.appendChild(input);
-    input.select();
-    const copied = document.execCommand("copy");
-    input.remove();
-    return copied;
-  } catch {
-    return false;
-  }
 }

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly deploy_path=/srv/obsidian-vault-site
+readonly image_repository=ghcr.io/live4dev/env_site
+
+if [[ "$#" -ne 1 || ! "$1" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+  printf 'Invalid image digest\n' >&2
+  exit 64
+fi
+
+cd "$deploy_path"
+export APP_IMAGE="${image_repository}@$1"
+
+/usr/bin/docker compose pull app
+/usr/bin/docker compose up -d --no-deps app
+/usr/bin/docker compose ps app

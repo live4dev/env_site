@@ -23,37 +23,60 @@ docker compose exec app npm run index:vault
 
 Chat uses the OpenAI-compatible `vsellm` endpoint configured by `VSELLM_BASE_URL`, `VSELLM_API_KEY`, and `CHAT_MODEL`.
 
-## GitHub Actions image deploy
+## Protected GitHub Actions deployment
 
-The production image is built by GitHub Actions and pushed to:
+Every push to `master` builds the production image, pushes it to GHCR, and
+deploys the immutable image digest through a restricted SSH account. The CI
+key cannot open a shell, forward ports, upload files, or run arbitrary Docker
+commands.
+
+The image is published as:
 
 ```text
 ghcr.io/live4dev/env_site:latest
 ```
 
-Required repository secrets:
+Create a GitHub environment named `production`, restrict it to the `master`
+branch, and add a required reviewer. Add these environment secrets:
 
 ```text
-DEPLOY_HOST=23.88.51.68
-DEPLOY_USER=root
-DEPLOY_PORT=22
-DEPLOY_SSH_KEY=<private key with SSH access to the VPS>
+DEPLOY_SSH_KEY=<dedicated Ed25519 private key for the deploy user>
+DEPLOY_KNOWN_HOSTS=<verified ssh-keyscan output for the VPS>
+BOOTSTRAP_SSH_KEY=<temporary administrator SSH key; delete after bootstrap>
 ```
 
-If the GHCR package is private, also add:
+Generate the dedicated deploy key locally:
 
-```text
-GHCR_USERNAME=live4dev
-GHCR_READ_TOKEN=<GitHub PAT with read:packages>
+```shell
+ssh-keygen -t ed25519 -N '' \
+  -C 'github-actions:live4dev/env_site:production' \
+  -f ./env-site-production
 ```
 
-On push to `main`, the workflow builds and pushes the image, then runs on the VPS:
+Put the private key in `DEPLOY_SSH_KEY`. Keep the public key locally; the
+bootstrap workflow derives the same public key from the private key.
 
-```bash
-cd /srv/obsidian-vault-site
-docker compose pull app
-docker compose up -d app
+Verify and pin the server host key before adding `DEPLOY_KNOWN_HOSTS`:
+
+```shell
+# Run on the VPS through a trusted administrator session.
+sudo ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+
+# Run locally and compare the displayed fingerprint with the VPS value.
+ssh-keyscan -H -p 22 -t ed25519 23.88.51.68 > env-site-known-hosts
+ssh-keygen -lf env-site-known-hosts
 ```
+
+Run the `Bootstrap production deploy access` workflow once on `master`. It
+creates the password-disabled `deploy` user, installs a forced-command SSH
+entrypoint, installs a narrowly scoped sudo rule, and makes the Compose and
+Caddy configuration root-owned. It preserves the existing production `.env`
+and Docker volumes. After the bootstrap succeeds, delete `BOOTSTRAP_SSH_KEY`
+from GitHub.
+
+The regular `Build and deploy production` workflow then deploys automatically
+after each push to `master`. If the GHCR package is private, log in to GHCR once
+as root on the VPS with a token limited to `read:packages`.
 
 ## Upload vault data
 
