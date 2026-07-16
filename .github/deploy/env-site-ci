@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "${SSH_ORIGINAL_COMMAND:-}" in
+  probe)
+    printf 'ready\n'
+    ;;
+  deploy\ *)
+    read -r verb digest extra <<< "$SSH_ORIGINAL_COMMAND"
+    if [[ "$verb" != "deploy" ||
+          ! "$digest" =~ ^sha256:[0-9a-f]{64}$ ||
+          -n "${extra:-}" ]]; then
+      printf 'Command denied\n' >&2
+      exit 64
+    fi
+    exec sudo -n /usr/local/sbin/env-site-deploy "$digest"
+    ;;
+  *)
+    printf 'Command denied\n' >&2
+    exit 64
+    ;;
+esac
