@@ -31,11 +31,14 @@ export const notes = pgTable("notes", {
   bodyText: text("body_text").notNull(),
   renderedHtml: text("rendered_html").notNull(),
   published: boolean("published").notNull().default(true),
+  publicShareToken: text("public_share_token"),
+  publicSharedAt: timestamp("public_shared_at", { withTimezone: true }),
   indexedAt: timestamp("indexed_at", { withTimezone: true }).notNull().defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   notesSearchIdx: index("notes_search_idx").using("gin", sql`to_tsvector('simple', ${table.bodyText})`),
+  publicShareTokenIdx: uniqueIndex("notes_public_share_token_idx").on(table.publicShareToken),
 }));
 
 export const noteLinks = pgTable("note_links", {

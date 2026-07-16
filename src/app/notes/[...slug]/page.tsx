@@ -6,6 +6,7 @@ import { noteChunks, noteLinks, notes } from "@/lib/db/schema";
 import { PageHeader, Panel } from "@/components/ui";
 import { slugFromRouteSegments } from "@/lib/notes/slug";
 import { MermaidRenderer } from "@/components/notes/mermaid-renderer";
+import { ShareControls } from "@/components/notes/share-controls";
 import { requireUser } from "@/lib/auth/session";
 import { canAccessRaw, visibleNotesFilter } from "@/lib/notes/access";
 
@@ -31,7 +32,17 @@ export default async function NotePage({ params }: { params: Promise<{ slug: str
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
       <article>
-        <PageHeader title={note.title} description={<VaultPathBreadcrumbs vaultPath={note.vaultPath} />} action={<button className="rounded-md border border-[var(--line)] px-3 py-2 text-sm" data-copy-url>Скопировать ссылку</button>} />
+        <PageHeader
+          title={note.title}
+          description={<VaultPathBreadcrumbs vaultPath={note.vaultPath} />}
+          action={
+            <ShareControls
+              noteId={note.id}
+              initialSharePath={user.role === "admin" && note.publicShareToken ? `/share/${note.publicShareToken}` : null}
+              canManagePublicShare={user.role === "admin"}
+            />
+          }
+        />
         <div className="prose max-w-none rounded-lg border border-[var(--line)] bg-[var(--panel)] p-5">
           {description ? <p className="text-lg text-[var(--muted)]">{description}</p> : null}
           <div dangerouslySetInnerHTML={{ __html: note.renderedHtml }} />

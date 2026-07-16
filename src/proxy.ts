@@ -3,7 +3,7 @@ import { jwtVerify } from "jose";
 import { sessionCookie } from "@/lib/auth/constants";
 
 const publicPaths = ["/login", "/robots.txt", "/favicon.ico", "/api/auth/login"];
-const staticPrefixes = ["/_next", "/images", "/public"];
+const publicPrefixes = ["/_next", "/images", "/public", "/share/"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -11,7 +11,11 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: responseHeaders } });
   response.headers.set("X-Robots-Tag", "noindex, nofollow");
 
-  if (publicPaths.includes(pathname) || staticPrefixes.some((prefix) => pathname.startsWith(prefix))) {
+  if (pathname.startsWith("/share/")) {
+    response.headers.set("Cache-Control", "private, no-store");
+  }
+
+  if (publicPaths.includes(pathname) || publicPrefixes.some((prefix) => pathname.startsWith(prefix))) {
     return response;
   }
 

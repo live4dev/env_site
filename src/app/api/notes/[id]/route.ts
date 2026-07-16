@@ -9,5 +9,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const user = await requireUser();
   const [note] = await db.select().from(notes).where(and(eq(notes.id, id), visibleNotesFilter(canAccessRaw(user)))).limit(1);
-  return note ? NextResponse.json({ note }) : NextResponse.json({ error: "Not found" }, { status: 404 });
+  return note
+    ? NextResponse.json({ note: { ...note, publicShareToken: null, publicSharedAt: null } })
+    : NextResponse.json({ error: "Not found" }, { status: 404 });
 }
