@@ -86,19 +86,16 @@ jobs:
 
       - name: Deploy immutable image digest
         env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
           IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
         run: |
           set -euo pipefail
-          test -n "$DEPLOY_HOST"
           [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
           ssh \
-            -p "${DEPLOY_PORT:-22}" \
+            -p 22 \
             -i ~/.ssh/deploy_key \
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
-            deploy@"$DEPLOY_HOST" \
+            deploy@23.88.51.68 \
             "deploy $IMAGE_DIGEST"
