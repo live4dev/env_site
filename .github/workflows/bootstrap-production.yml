@@ -41,13 +41,8 @@ jobs:
           ssh-keygen -y -f ~/.ssh/deploy_key > .github/deploy/deploy-key.pub
 
       - name: Install server deployment files
-        env:
-          BOOTSTRAP_USER: ${{ vars.BOOTSTRAP_USER }}
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
         run: |
           set -euo pipefail
-          test -n "$DEPLOY_HOST"
           tar -czf - \
             .github/deploy/bootstrap-server.sh \
             .github/deploy/deploy-key.pub \
@@ -56,13 +51,13 @@ jobs:
             Caddyfile \
             docker-compose.yml \
           | ssh \
-              -p "${DEPLOY_PORT:-22}" \
+              -p 22 \
               -i ~/.ssh/bootstrap_key \
               -o BatchMode=yes \
               -o ConnectTimeout=15 \
               -o IdentitiesOnly=yes \
               -o StrictHostKeyChecking=yes \
-              "${BOOTSTRAP_USER:-root}@${DEPLOY_HOST}" \
+              root@23.88.51.68 \
               'set -eu
                workdir=$(mktemp -d)
                trap '\''rm -rf "$workdir"'\'' EXIT
@@ -74,18 +69,15 @@ jobs:
                fi'
 
       - name: Verify restricted deploy account
-        env:
-          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
         run: |
           set -euo pipefail
           response=$(ssh \
-            -p "${DEPLOY_PORT:-22}" \
+            -p 22 \
             -i ~/.ssh/deploy_key \
             -o BatchMode=yes \
             -o ConnectTimeout=15 \
             -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
-            deploy@"$DEPLOY_HOST" \
+            deploy@23.88.51.68 \
             probe)
           test "$response" = "ready"
