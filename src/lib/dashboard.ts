@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { notes, userNoteStates } from "@/lib/db/schema";
 import { visibleNotesFilter } from "@/lib/notes/access";
 import { env } from "@/lib/config";
+import { toDate } from "@/lib/dates";
 
 export type DashboardPeriod = "today" | "week" | "month" | "saved" | "queue";
 
@@ -35,7 +36,7 @@ export async function getDashboardData(params: {
   period: DashboardPeriod;
   rawAllowed: boolean;
 }) {
-  const changedAt = sql<Date>`coalesce(${notes.updatedDate}, ${notes.indexedAt})`;
+  const changedAt = sql<Date>`coalesce(${notes.updatedDate}, ${notes.indexedAt})`.mapWith(notes.updatedDate);
   const todayStart = sql<Date>`date_trunc('day', now() at time zone ${env.APP_TIMEZONE}) at time zone ${env.APP_TIMEZONE}`;
   const periodFilter = dashboardPeriodFilter(params.period, changedAt, todayStart);
   const stateJoin = and(eq(userNoteStates.noteId, notes.id), eq(userNoteStates.userId, params.userId));
@@ -79,20 +80,23 @@ export async function getDashboardData(params: {
     getActivity(params.rawAllowed),
   ]);
 
-  const items = rows.map((row): DashboardNote => ({
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    vaultPath: row.vaultPath,
-    type: row.type,
-    status: row.status,
-    summary: summarize(row.bodyText),
-    sourceUrl: sourceUrl(row.frontmatter, row.sources),
-    updatedAt: row.updatedAt.toISOString(),
-    saved: row.saved ?? false,
-    readLater: row.readLater ?? false,
-    reason: signalReason(row.vaultPath, row.type, row.status, row.updatedAt),
-  }));
+  const items = rows.map((row): DashboardNote => {
+    const updatedAt = toDate(row.updatedAt);
+    return {
+      id: row.id,
+      title: row.title,
+      slug: row.slug,
+      vaultPath: row.vaultPath,
+      type: row.type,
+      status: row.status,
+      summary: summarize(row.bodyText),
+      sourceUrl: sourceUrl(row.frontmatter, row.sources),
+      updatedAt: updatedAt.toISOString(),
+      saved: row.saved ?? false,
+      readLater: row.readLater ?? false,
+      reason: signalReason(row.vaultPath, row.type, row.status, updatedAt),
+    };
+  });
 
   return {
     items,
@@ -116,7 +120,7 @@ function dashboardPeriodFilter(period: DashboardPeriod, changedAt: SQL<Date>, to
 }
 
 async function getActivity(rawAllowed: boolean): Promise<ActivityDay[]> {
-  const changedAt = sql<Date>`coalesce(${notes.updatedDate}, ${notes.indexedAt})`;
+  const changedAt = sql<Date>`coalesce(${notes.updatedDate}, ${notes.indexedAt})`.mapWith(notes.updatedDate);
   const day = sql<string>`date_trunc('day', ${changedAt})::date`.as("day");
   const rows = await db
     .select({ day, count: sql<number>`count(*)::int` })

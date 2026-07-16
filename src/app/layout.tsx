@@ -21,8 +21,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const folderRows = user ? await db.selectDistinct({ folder: notes.folder }).from(notes).where(visibleNotesFilter(canAccessRaw(user))).orderBy(asc(notes.folder)).limit(1000) : [];
   return (
     <html lang="ru" suppressHydrationWarning>
-      <body>
+      <head>
         <ThemeScript />
+      </head>
+      <body>
         {user ? (
           <div className="min-h-screen lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
             <AppSidebar folders={folderRows.map((row) => row.folder).filter(Boolean)} user={user} />

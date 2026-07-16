@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
-
-function getAppliedTheme(): Theme {
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
-}
-
-function applyTheme(theme: Theme) {
-  localStorage.setItem("theme", theme);
-  document.documentElement.classList.toggle("dark", theme === "dark");
-  window.dispatchEvent(new CustomEvent("themechange", { detail: theme }));
-}
+import { applyTheme, getAppliedTheme, THEME_CHANGE_EVENT, type Theme } from "@/lib/browser/theme";
 
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>("light");
@@ -20,11 +9,11 @@ export function ThemeToggle() {
   useEffect(() => {
     const syncTheme = () => setTheme(getAppliedTheme());
     syncTheme();
-    window.addEventListener("themechange", syncTheme);
+    window.addEventListener(THEME_CHANGE_EVENT, syncTheme);
     window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTheme);
 
     return () => {
-      window.removeEventListener("themechange", syncTheme);
+      window.removeEventListener(THEME_CHANGE_EVENT, syncTheme);
       window.matchMedia("(prefers-color-scheme: dark)").removeEventListener("change", syncTheme);
     };
   }, []);

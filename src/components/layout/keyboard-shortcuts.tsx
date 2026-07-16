@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { applyTheme, getAppliedTheme } from "@/lib/browser/theme";
 
 export function KeyboardShortcuts() {
   const router = useRouter();
@@ -15,11 +16,7 @@ export function KeyboardShortcuts() {
         window.dispatchEvent(new Event("vault:command"));
       }
       if (event.key === "t" && !typing) {
-        const root = document.documentElement;
-        const next = root.classList.contains("dark") ? "light" : "dark";
-        localStorage.setItem("theme", next);
-        root.classList.toggle("dark", next === "dark");
-        window.dispatchEvent(new CustomEvent("themechange", { detail: next }));
+        applyTheme(getAppliedTheme() === "dark" ? "light" : "dark");
       }
       if (event.key === "g" && !typing) {
         if (g) {
