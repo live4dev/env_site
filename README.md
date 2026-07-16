@@ -45,14 +45,6 @@ DEPLOY_KNOWN_HOSTS=<verified ssh-keyscan output for the VPS>
 BOOTSTRAP_SSH_KEY=<temporary administrator SSH key; delete after bootstrap>
 ```
 
-Add these environment variables:
-
-```text
-DEPLOY_HOST=23.88.51.68
-DEPLOY_PORT=22
-BOOTSTRAP_USER=root
-```
-
 Generate the dedicated deploy key locally:
 
 ```shell
