@@ -1,0 +1,91 @@
+name: Bootstrap production deploy access
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  bootstrap:
+    name: Install restricted deploy access
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.ref == 'refs/heads/master'
+    environment: production
+    permissions:
+      contents: read
+    concurrency:
+      group: production-bootstrap
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Configure SSH keys
+        env:
+          BOOTSTRAP_SSH_KEY: ${{ secrets.BOOTSTRAP_SSH_KEY }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$BOOTSTRAP_SSH_KEY"
+          test -n "$DEPLOY_SSH_KEY"
+          test -n "$DEPLOY_KNOWN_HOSTS"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$BOOTSTRAP_SSH_KEY" | tr -d '\r' > ~/.ssh/bootstrap_key
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/bootstrap_key ~/.ssh/deploy_key
+          chmod 644 ~/.ssh/known_hosts
+          ssh-keygen -y -f ~/.ssh/bootstrap_key >/dev/null
+          ssh-keygen -y -f ~/.ssh/deploy_key > .github/deploy/deploy-key.pub
+
+      - name: Install server deployment files
+        env:
+          BOOTSTRAP_USER: ${{ vars.BOOTSTRAP_USER }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOST"
+          tar -czf - \
+            .github/deploy/bootstrap-server.sh \
+            .github/deploy/deploy-key.pub \
+            .github/deploy/env-site-ci \
+            .github/deploy/env-site-deploy \
+            Caddyfile \
+            docker-compose.yml \
+          | ssh \
+              -p "${DEPLOY_PORT:-22}" \
+              -i ~/.ssh/bootstrap_key \
+              -o BatchMode=yes \
+              -o ConnectTimeout=15 \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              "${BOOTSTRAP_USER:-root}@${DEPLOY_HOST}" \
+              'set -eu
+               workdir=$(mktemp -d)
+               trap '\''rm -rf "$workdir"'\'' EXIT
+               tar -xzf - -C "$workdir"
+               if [ "$(id -u)" -eq 0 ]; then
+                 bash "$workdir/.github/deploy/bootstrap-server.sh" "$workdir"
+               else
+                 sudo -n bash "$workdir/.github/deploy/bootstrap-server.sh" "$workdir"
+               fi'
+
+      - name: Verify restricted deploy account
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ vars.DEPLOY_PORT }}
+        run: |
+          set -euo pipefail
+          response=$(ssh \
+            -p "${DEPLOY_PORT:-22}" \
+            -i ~/.ssh/deploy_key \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            deploy@"$DEPLOY_HOST" \
+            probe)
+          test "$response" = "ready"
