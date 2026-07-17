@@ -30,12 +30,14 @@ authorized key has a forced command pointing to `/usr/local/bin/env-site-ci`.
 The entrypoint accepts only:
 
 - `probe`
+- `configure-openai`
 - `deploy sha256:<64 lowercase hexadecimal characters>`
 
 The account cannot open a shell, upload files, allocate a PTY, or forward
-connections. Its only sudo permission is:
+connections. Its only sudo permissions are:
 
 ```text
+/usr/local/sbin/env-site-configure-openai
 /usr/local/sbin/env-site-deploy
 ```
 
@@ -92,6 +94,8 @@ secrets:
 | `DEPLOY_SSH_KEY` | Complete private key for the restricted `deploy` account |
 | `DEPLOY_KNOWN_HOSTS` | Verified SSH host-key entry for the VPS |
 | `BOOTSTRAP_SSH_KEY` | Temporary administrator private key used only for bootstrap |
+| `OPENAI_BASE_URL` | OpenAI-compatible HTTPS API base URL |
+| `OPENAI_API_KEY` | API credential for chat completions and embeddings |
 
 The secrets can be set from the repository directory without printing them:
 
@@ -139,6 +143,12 @@ Run **Bootstrap production deploy access** from the GitHub Actions page on the
 4. installs the deployment wrapper and narrow sudo rule;
 5. installs root-owned Compose and Caddy configuration;
 6. verifies that `deploy@23.88.51.68 probe` returns `ready`.
+
+The regular deploy workflow sends `OPENAI_BASE_URL` and `OPENAI_API_KEY` from
+the GitHub `production` environment to the restricted `configure-openai`
+command over SSH standard input. The root-owned helper atomically replaces
+only those values in `/srv/obsidian-vault-site/.env` and never prints the
+secret.
 
 Delete `BOOTSTRAP_SSH_KEY` from the GitHub environment after a successful
 bootstrap. Add it again only when provisioning or rotating server access.
@@ -221,7 +231,8 @@ A push to `main` starts **Build and deploy production**:
 2. push `latest` and `sha-<commit>` tags to GHCR;
 3. pass the immutable image digest to the deployment job;
 4. connect with the restricted deployment key;
-5. pull and restart only the `app` service using that digest.
+5. update the OpenAI-compatible runtime configuration from GitHub secrets;
+6. pull and restart only the `app` service using that digest.
 
 Verify the deployment SSH path from a trusted workstation:
 
@@ -292,7 +303,7 @@ sudo visudo -cf /etc/sudoers.d/env-site-vaultsync
 Expected permissions:
 
 ```text
-deploy    -> /usr/local/sbin/env-site-deploy
+deploy    -> /usr/local/sbin/env-site-configure-openai, /usr/local/sbin/env-site-deploy
 vaultsync -> /usr/local/sbin/env-site-reindex
 ```
 
@@ -339,6 +350,7 @@ environment secret. Never bypass strict host-key checking.
 | --- | --- |
 | Deployment fails during SSH configuration | Confirm `DEPLOY_SSH_KEY` and `DEPLOY_KNOWN_HOSTS` exist in the `production` environment |
 | Deployment job is skipped | Confirm the workflow and GitHub environment both allow `main` |
+| Deployment reports missing OpenAI configuration | Confirm `OPENAI_BASE_URL` and `OPENAI_API_KEY` exist in the GitHub `production` environment |
 | `Permission denied (publickey)` for `deploy` | Compare the local deploy public-key fingerprint with `/home/deploy/.ssh/authorized_keys` and rerun bootstrap if needed |
 | `Command denied` for a valid deployment | Confirm the command contains exactly one lowercase `sha256:<digest>` argument |
 | Vault upload cannot write | Check ownership and mode of `/srv/obsidian-vault` and verify the connection uses `vaultsync` |
@@ -352,6 +364,8 @@ environment secret. Never bypass strict host-key checking.
 - Never reuse the administrator, deployment, and vault synchronization keys.
 - Never store private keys, production `.env` contents, or access tokens in the
   repository.
+- Store `OPENAI_BASE_URL` and `OPENAI_API_KEY` as GitHub `production`
+  environment secrets; do not pass them as image build arguments.
 - Keep `/srv/obsidian-vault-site/.env` owned by root with mode `0600`.
 - Keep installed wrappers root-owned and non-writable by deployment accounts.
 - Keep strict SSH host-key checking enabled in GitHub Actions.

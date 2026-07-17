@@ -87,9 +87,23 @@ jobs:
       - name: Deploy immutable image digest
         env:
           IMAGE_DIGEST: ${{ needs.build.outputs.digest }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -euo pipefail
           [[ "$IMAGE_DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]
+          test -n "$OPENAI_BASE_URL"
+          test -n "$OPENAI_API_KEY"
+          printf '%s\n%s\n' "$OPENAI_BASE_URL" "$OPENAI_API_KEY" \
+          | ssh \
+              -p 22 \
+              -i ~/.ssh/deploy_key \
+              -o BatchMode=yes \
+              -o ConnectTimeout=15 \
+              -o IdentitiesOnly=yes \
+              -o StrictHostKeyChecking=yes \
+              deploy@23.88.51.68 \
+              configure-openai
           ssh \
             -p 22 \
             -i ~/.ssh/deploy_key \

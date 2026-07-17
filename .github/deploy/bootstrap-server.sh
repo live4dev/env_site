@@ -15,6 +15,7 @@ fi
 for required_file in \
   "$public_key_file" \
   "$source_root/.github/deploy/env-site-ci" \
+  "$source_root/.github/deploy/env-site-configure-openai" \
   "$source_root/.github/deploy/env-site-deploy" \
   "$source_root/Caddyfile" \
   "$source_root/docker-compose.yml"; do
@@ -53,9 +54,12 @@ install -o "$deploy_user" -g "$deploy_user" -m 600 \
 install -o root -g root -m 755 \
   "$source_root/.github/deploy/env-site-ci" /usr/local/bin/env-site-ci
 install -o root -g root -m 755 \
+  "$source_root/.github/deploy/env-site-configure-openai" \
+  /usr/local/sbin/env-site-configure-openai
+install -o root -g root -m 755 \
   "$source_root/.github/deploy/env-site-deploy" /usr/local/sbin/env-site-deploy
 
-printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/env-site-deploy\n' \
+printf '%s ALL=(root) NOPASSWD: /usr/local/sbin/env-site-configure-openai, /usr/local/sbin/env-site-deploy\n' \
   "$deploy_user" > "$sudoers_tmp"
 visudo -cf "$sudoers_tmp" >/dev/null
 install -o root -g root -m 440 "$sudoers_tmp" /etc/sudoers.d/env-site-deploy

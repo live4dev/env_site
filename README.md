@@ -25,7 +25,7 @@ docker compose exec app npm run user:create -- --email you@example.com --passwor
 docker compose exec app npm run index:vault
 ```
 
-Chat uses the OpenAI-compatible `vsellm` endpoint configured by `VSELLM_BASE_URL`, `VSELLM_API_KEY`, and `CHAT_MODEL`.
+Chat uses an OpenAI-compatible endpoint configured by `OPENAI_BASE_URL`, `OPENAI_API_KEY`, and `CHAT_MODEL`.
 
 ## Protected GitHub Actions deployment
 

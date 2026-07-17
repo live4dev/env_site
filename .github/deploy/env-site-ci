@@ -5,6 +5,9 @@ case "${SSH_ORIGINAL_COMMAND:-}" in
   probe)
     printf 'ready\n'
     ;;
+  configure-openai)
+    exec sudo -n /usr/local/sbin/env-site-configure-openai
+    ;;
   deploy\ *)
     read -r verb digest extra <<< "$SSH_ORIGINAL_COMMAND"
     if [[ "$verb" != "deploy" ||

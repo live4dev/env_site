@@ -13,5 +13,5 @@ cd "$deploy_path"
 export APP_IMAGE="${image_repository}@$1"
 
 /usr/bin/docker compose pull app
-/usr/bin/docker compose up -d --no-deps app
+/usr/bin/docker compose up -d --no-deps --force-recreate app
 /usr/bin/docker compose ps app

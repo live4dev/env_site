@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly deploy_path=/srv/obsidian-vault-site
+readonly env_file="$deploy_path/.env"
+
+if [[ "$EUID" -ne 0 ]]; then
+  printf 'Run this command as root\n' >&2
+  exit 77
+fi
+
+if [[ ! -f "$env_file" || -L "$env_file" ]]; then
+  printf 'Missing or invalid production environment file\n' >&2
+  exit 66
+fi
+
+if ! IFS= read -r openai_base_url || ! IFS= read -r openai_api_key; then
+  printf 'OPENAI_BASE_URL and OPENAI_API_KEY are required on standard input\n' >&2
+  exit 64
+fi
+
+if IFS= read -r trailing_input && [[ -n "$trailing_input" ]]; then
+  printf 'Unexpected trailing configuration input\n' >&2
+  exit 64
+fi
+
+if [[ ! "$openai_base_url" =~ ^https://[^[:space:]]+$ ]]; then
+  printf 'OPENAI_BASE_URL must be an HTTPS URL without whitespace\n' >&2
+  exit 64
+fi
+
+if [[ ${#openai_api_key} -lt 20 || "$openai_api_key" =~ [[:space:]] ]]; then
+  printf 'OPENAI_API_KEY is invalid\n' >&2
+  exit 64
+fi
+
+env_tmp=$(mktemp "$deploy_path/.env.tmp.XXXXXX")
+trap 'rm -f "$env_tmp"' EXIT
+
+awk '!/^(OPENAI_BASE_URL|OPENAI_API_KEY|VSELLM_BASE_URL|VSELLM_API_KEY)=/' \
+  "$env_file" > "$env_tmp"
+printf 'OPENAI_BASE_URL=%s\nOPENAI_API_KEY=%s\n' \
+  "$openai_base_url" "$openai_api_key" >> "$env_tmp"
+
+chown root:root "$env_tmp"
+chmod 600 "$env_tmp"
+mv "$env_tmp" "$env_file"
+trap - EXIT
+
+printf 'OpenAI runtime credentials updated\n'

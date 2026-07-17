@@ -47,6 +47,7 @@ jobs:
             .github/deploy/bootstrap-server.sh \
             .github/deploy/deploy-key.pub \
             .github/deploy/env-site-ci \
+            .github/deploy/env-site-configure-openai \
             .github/deploy/env-site-deploy \
             Caddyfile \
             docker-compose.yml \

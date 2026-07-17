@@ -35,16 +35,16 @@ export async function answerFromVault(question: string, rawAllowed = false) {
     };
   }
 
-  if (!env.VSELLM_BASE_URL || !env.VSELLM_API_KEY) {
+  if (!env.OPENAI_BASE_URL || !env.OPENAI_API_KEY) {
     return {
-      answer: `Найден релевантный контекст, но VSELLM_BASE_URL/VSELLM_API_KEY не настроены. Ближайшие источники:\n\n${sources.map((source) => `- [${source.title}](${source.url})`).join("\n")}`,
+      answer: `Найден релевантный контекст, но OPENAI_BASE_URL/OPENAI_API_KEY не настроены. Ближайшие источники:\n\n${sources.map((source) => `- [${source.title}](${source.url})`).join("\n")}`,
       sources,
       model: env.CHAT_MODEL,
       tokenUsage: undefined,
     };
   }
 
-  const client = new OpenAI({ baseURL: env.VSELLM_BASE_URL, apiKey: env.VSELLM_API_KEY });
+  const client = new OpenAI({ baseURL: env.OPENAI_BASE_URL, apiKey: env.OPENAI_API_KEY });
   const context = chunks
     .map((chunk, index) => `[${index + 1}] ${chunk.title}\nURL: /notes/${chunk.slug}${chunk.headingAnchor ? `#${chunk.headingAnchor}` : ""}\n${chunk.content}`)
     .join("\n\n---\n\n");
