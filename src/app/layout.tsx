@@ -8,6 +8,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { KeyboardShortcuts } from "@/components/layout/keyboard-shortcuts";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { ThemeScript } from "@/components/layout/theme-script";
+import packageMetadata from "../../package.json";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -27,7 +28,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         {user ? (
           <div className="min-h-screen lg:grid lg:grid-cols-[280px_minmax(0,1fr)]">
-            <AppSidebar folders={folderRows.map((row) => row.folder).filter(Boolean)} user={user} />
+            <AppSidebar folders={folderRows.map((row) => row.folder).filter(Boolean)} user={user} version={packageMetadata.version} />
             <main className="min-w-0 px-4 py-6 sm:px-6 lg:px-8"><div className="mx-auto max-w-7xl">{children}</div></main>
             <KeyboardShortcuts />
             <CommandPalette />

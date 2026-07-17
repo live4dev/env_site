@@ -13,6 +13,10 @@ Next.js private Russian-language website for a read-only Obsidian vault with aut
 
 ## Production
 
+See [the production infrastructure runbook](docs/infra/env-site-production.md)
+for provisioning, deployment, vault synchronization, verification, key
+rotation, and recovery procedures.
+
 Deploy with `docker-compose.yml`, mount the synced vault read-only at `/vault`, and run:
 
 ```bash
