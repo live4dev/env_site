@@ -25,7 +25,7 @@ Chat uses the OpenAI-compatible `vsellm` endpoint configured by `VSELLM_BASE_URL
 
 ## Protected GitHub Actions deployment
 
-Every push to `master` builds the production image, pushes it to GHCR, and
+Every push to `main` builds the production image, pushes it to GHCR, and
 deploys the immutable image digest through a restricted SSH account. The CI
 key cannot open a shell, forward ports, upload files, or run arbitrary Docker
 commands.
@@ -36,7 +36,7 @@ The image is published as:
 ghcr.io/live4dev/env_site:latest
 ```
 
-Create a GitHub environment named `production`, restrict it to the `master`
+Create a GitHub environment named `production`, restrict it to the `main`
 branch, and add a required reviewer. Add these environment secrets:
 
 ```text
@@ -67,7 +67,7 @@ ssh-keyscan -H -p 22 -t ed25519 23.88.51.68 > env-site-known-hosts
 ssh-keygen -lf env-site-known-hosts
 ```
 
-Run the `Bootstrap production deploy access` workflow once on `master`. It
+Run the `Bootstrap production deploy access` workflow once on `main`. It
 creates the password-disabled `deploy` user, installs a forced-command SSH
 entrypoint, installs a narrowly scoped sudo rule, and makes the Compose and
 Caddy configuration root-owned. It preserves the existing production `.env`
@@ -75,7 +75,7 @@ and Docker volumes. After the bootstrap succeeds, delete `BOOTSTRAP_SSH_KEY`
 from GitHub.
 
 The regular `Build and deploy production` workflow then deploys automatically
-after each push to `master`. If the GHCR package is private, log in to GHCR once
+after each push to `main`. If the GHCR package is private, log in to GHCR once
 as root on the VPS with a token limited to `read:packages`.
 
 ## Upload vault data
@@ -83,10 +83,13 @@ as root on the VPS with a token limited to `read:packages`.
 Upload the local Environment vault to the production vault mount and reindex the site:
 
 ```bash
-npm run upload:vault -- --host 23.88.51.68 --user root
+npm run upload:vault -- \
+  --host 23.88.51.68 \
+  --user vaultsync \
+  --identity "$HOME/.ssh/env_site_vaultsync"
 ```
 
-Use `--dry-run` before the first upload to preview the transfer. Add `--delete` when you want the remote `/srv/obsidian-vault` mirror to remove files that no longer exist locally. The script uses `VAULT_EXCLUDE_GLOBS` by default, including private folders such as `10_Я/**` and `40_Люди/**`.
+Use `--dry-run` before the first upload to preview the transfer. Add `--delete` when you want the remote `/srv/obsidian-vault` mirror to remove files that no longer exist locally. The `vaultsync` account can write only the vault tree and reindexes through `/usr/local/sbin/env-site-reindex`; it is not a member of the Docker group. The script uses `VAULT_EXCLUDE_GLOBS` by default, including private folders such as `10_Я/**` and `40_Люди/**`.
 
 For local image builds, use:
 
