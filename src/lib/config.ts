@@ -7,6 +7,7 @@ const envSchema = z.object({
   VAULT_EXCLUDE_GLOBS: z.string().default("raw/**,Clippings/**,.git/**,.obsidian/**,.trash/**,node_modules/**,10_Я/**,40_Люди/**"),
   AUTH_SECRET: z.string().default("dev-secret-change-me"),
   APP_BASE_URL: z.string().default("http://localhost:3000"),
+  APP_REVISION: z.string().optional(),
   APP_TIMEZONE: z.string().default("Asia/Barnaul"),
   OPENAI_BASE_URL: z.string().optional(),
   OPENAI_API_KEY: z.string().optional(),

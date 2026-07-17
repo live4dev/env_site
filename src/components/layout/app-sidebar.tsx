@@ -13,7 +13,7 @@ type SidebarUser = {
   canAccessRaw: boolean;
 };
 
-export function AppSidebar({ folders, user, version }: { folders: string[]; user: SidebarUser; version: string }) {
+export function AppSidebar({ folders, user, version, revision }: { folders: string[]; user: SidebarUser; version: string; revision?: string }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const tree = useMemo(() => buildFolderTree(folders), [folders]);
@@ -87,7 +87,7 @@ export function AppSidebar({ folders, user, version }: { folders: string[]; user
           <span className="grid size-8 place-items-center rounded-full bg-[var(--accent)] text-sm font-semibold text-white">{user.displayName.slice(0, 1).toUpperCase()}</span>
           <span className="min-w-0"><span className="block truncate text-sm font-medium text-[var(--foreground)]">{user.displayName}</span><span className="block text-xs text-[var(--muted)]">{user.role === "admin" ? "Администратор" : "Пользователь"}</span></span>
         </Link>
-        <p className="pt-2 text-center text-[10px] text-[var(--muted)]">Версия {version}</p>
+        <p className="pt-2 text-center text-[10px] text-[var(--muted)]">Версия {version}{revision ? ` · ${revision}` : ""}</p>
       </div>
     </aside>
   </>;

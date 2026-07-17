@@ -11,7 +11,9 @@ RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
+ARG APP_REVISION
 ENV NODE_ENV=production
+ENV APP_REVISION=$APP_REVISION
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next

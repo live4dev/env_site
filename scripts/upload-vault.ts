@@ -9,8 +9,6 @@ type Options = {
   port: string;
   identity: string;
   remotePath: string;
-  composeDir: string;
-  service: string;
   reindexCommand: string;
   excludes: string[];
   dryRun: boolean;
@@ -48,14 +46,12 @@ Uploads the local Environment vault to the production vault mount and reindexes 
 
 Options:
   --source <path>          Local vault path. Defaults to VAULT_UPLOAD_SOURCE, VAULT_ROOT, or ${defaultVaultRoot}
-  --host <host>            SSH host. Defaults to VAULT_UPLOAD_HOST, DEPLOY_HOST, or APP_HOST
+  --host <host>            SSH host. Defaults to VAULT_UPLOAD_HOST
   --user <user>            SSH user. Defaults to VAULT_UPLOAD_USER or vaultsync
-  --port <port>            SSH port. Defaults to VAULT_UPLOAD_PORT, DEPLOY_PORT, or 22
+  --port <port>            SSH port. Defaults to VAULT_UPLOAD_PORT or 22
   --identity <path>        SSH private key. Defaults to VAULT_UPLOAD_IDENTITY
   --remote-path <path>     Remote vault path. Defaults to /srv/obsidian-vault
-  --compose-dir <path>     Remote compose project path. Defaults to /srv/obsidian-vault-site
-  --service <name>         Docker Compose app service. Defaults to app
-  --reindex-command <cmd>  Remote reindex command. Non-root defaults to the restricted sudo wrapper
+  --reindex-command <cmd>  Remote reindex command. Defaults to the restricted sudo wrapper
   --exclude <glob>         Extra rsync exclude. Can be repeated
   --delete                 Delete remote files that no longer exist locally
   --dry-run                Show what would upload without changing remote files
@@ -68,13 +64,11 @@ function parseArgs(argv: string[]): Options {
   const excludes = splitCsv(env("VAULT_EXCLUDE_GLOBS", defaultExcludes.join(",")));
   const options: Options = {
     source: env("VAULT_UPLOAD_SOURCE", env("VAULT_ROOT", defaultVaultRoot)),
-    host: env("VAULT_UPLOAD_HOST", env("DEPLOY_HOST", env("APP_HOST"))),
+    host: env("VAULT_UPLOAD_HOST"),
     user: env("VAULT_UPLOAD_USER", "vaultsync"),
-    port: env("VAULT_UPLOAD_PORT", env("DEPLOY_PORT", "22")),
+    port: env("VAULT_UPLOAD_PORT", "22"),
     identity: env("VAULT_UPLOAD_IDENTITY"),
     remotePath: env("VAULT_UPLOAD_REMOTE_PATH", "/srv/obsidian-vault"),
-    composeDir: env("VAULT_UPLOAD_COMPOSE_DIR", "/srv/obsidian-vault-site"),
-    service: env("VAULT_UPLOAD_SERVICE", "app"),
     reindexCommand: env("VAULT_UPLOAD_REINDEX_COMMAND"),
     excludes,
     dryRun: false,
@@ -109,12 +103,6 @@ function parseArgs(argv: string[]): Options {
       case "--remote-path":
         options.remotePath = next();
         break;
-      case "--compose-dir":
-        options.composeDir = next();
-        break;
-      case "--service":
-        options.service = next();
-        break;
       case "--reindex-command":
         options.reindexCommand = next();
         break;
@@ -140,7 +128,15 @@ function parseArgs(argv: string[]): Options {
   }
 
   if (!options.host) {
-    throw new Error("Missing SSH host. Set VAULT_UPLOAD_HOST/DEPLOY_HOST or pass --host.");
+    throw new Error("Missing SSH host. Set VAULT_UPLOAD_HOST or pass --host.");
+  }
+
+  if (options.user === "deploy") {
+    throw new Error("The deploy account cannot upload vault files. Use the vaultsync account.");
+  }
+
+  if (options.user === "root") {
+    throw new Error("Root vault uploads are no longer supported. Use the vaultsync account.");
   }
 
   return options;
@@ -218,10 +214,7 @@ async function main() {
   }
 
   const reindexCommand =
-    options.reindexCommand ||
-    (options.user === "root"
-      ? `cd ${quoteShell(options.composeDir)} && docker compose exec -T ${quoteShell(options.service)} npm run index:vault`
-      : "sudo -n /usr/local/sbin/env-site-reindex");
+    options.reindexCommand || "sudo -n /usr/local/sbin/env-site-reindex";
 
   await run("ssh", [
     ...sshOptions,

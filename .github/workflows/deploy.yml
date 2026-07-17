@@ -51,6 +51,8 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64
+          build-args: |
+            APP_REVISION=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
