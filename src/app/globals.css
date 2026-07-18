@@ -31,13 +31,15 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-a {
-  color: var(--accent);
-  text-decoration: none;
-}
+@layer base {
+  a {
+    color: var(--accent);
+    text-decoration: none;
+  }
 
-a:hover {
-  text-decoration: underline;
+  a:hover {
+    text-decoration: underline;
+  }
 }
 
 .prose {
