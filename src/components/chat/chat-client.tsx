@@ -1,11 +1,25 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { tokenizeChatAnswer } from "@/lib/chat/answer-links";
 import { parseChatEventStream, type ChatSource } from "@/lib/chat/stream";
 
 async function responseError(response: Response) {
   const data = await response.json().catch(() => null) as { error?: string } | null;
   return data?.error ?? `Ошибка запроса (${response.status}).`;
+}
+
+function ChatAnswer({ answer, sources }: { answer: string; sources: ChatSource[] }) {
+  const tokens = tokenizeChatAnswer(answer, sources);
+
+  return (
+    <div aria-live="polite" className="prose mt-5 whitespace-pre-wrap">
+      {tokens.map((token, index) => token.type === "link"
+        ? <Link key={`${token.href}-${index}`} href={token.href}>{token.text}</Link>
+        : token.text)}
+    </div>
+  );
 }
 
 export function ChatClient({ initialQuestion = "" }: { initialQuestion?: string }) {
@@ -65,12 +79,12 @@ export function ChatClient({ initialQuestion = "" }: { initialQuestion?: string 
         <textarea value={question} onChange={(event) => setQuestion(event.target.value)} className="min-h-36 w-full rounded-md border border-[var(--line)] bg-[var(--background)] p-3" placeholder="Спросить по хранилищу..." />
         <button onClick={ask} disabled={loading} className="mt-3 rounded-md bg-[var(--accent)] px-4 py-2 font-medium text-white disabled:opacity-60">{loading ? "Отвечаю..." : "Спросить"}</button>
         {error ? <p role="alert" className="mt-3 text-sm text-red-600">{error}</p> : null}
-        {answer ? <div aria-live="polite" className="prose mt-5 whitespace-pre-wrap">{answer}</div> : null}
+        {answer ? <ChatAnswer answer={answer} sources={sources} /> : null}
       </section>
       <aside className="rounded-lg border border-[var(--line)] bg-[var(--panel)] p-4">
         <h2 className="mb-3 font-semibold">Источники</h2>
         <div className="grid gap-2 text-sm">
-          {sources.map((source) => <a key={source.url} href={source.url}>{source.title}{source.heading ? ` · ${source.heading}` : ""}</a>)}
+          {sources.map((source) => <Link key={source.url} href={source.url}>{source.title}{source.heading ? ` · ${source.heading}` : ""}</Link>)}
         </div>
       </aside>
     </div>
