@@ -4,7 +4,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().default("postgres://postgres:postgres@localhost:5432/vault_site"),
   VAULT_ROOT: z.string().default("/Users/legonaut/Documents/Obsidian/Environment"),
   VAULT_INCLUDE_GLOBS: z.string().default("wiki/**/*.md,inputs/**/*.md,outputs/**/*.md,index.md,log.md"),
-  VAULT_EXCLUDE_GLOBS: z.string().default("raw/**,Clippings/**,.git/**,.obsidian/**,.trash/**,node_modules/**,10_Я/**,40_Люди/**"),
+  VAULT_EXCLUDE_GLOBS: z.string().default("raw/**,Clippings/**,.env,.env.*,.git/**,.obsidian/**,.trash/**,node_modules/**,10_Я/**,40_Люди/**,.DS_Store,*.tmp,*.swp"),
   AUTH_SECRET: z.string().default("dev-secret-change-me"),
   APP_BASE_URL: z.string().default("http://localhost:3000"),
   APP_REVISION: z.string().optional(),

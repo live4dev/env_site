@@ -261,29 +261,29 @@ token limited to `read:packages`.
 
 ## Upload and index the vault
 
-Always preview an upload first:
+From the Environment vault directory or Obsidian Terminal, always preview an upload first:
 
 ```bash
-npm run upload:vault -- \
-  --host 23.88.51.68 \
-  --user vaultsync \
-  --identity "$HOME/.ssh/env_site_vaultsync" \
-  --dry-run
+./.obsidian/scripts/upload-vault --dry-run
 ```
 
 Run the upload after reviewing the file list:
 
 ```bash
-npm run upload:vault -- \
-  --host 23.88.51.68 \
-  --user vaultsync \
-  --identity "$HOME/.ssh/env_site_vaultsync"
+./.obsidian/scripts/upload-vault
+```
+
+Mirror deletions only when explicitly intended:
+
+```bash
+./.obsidian/scripts/upload-vault --delete
 ```
 
 The command synchronizes allowed files and then runs the restricted reindex
-wrapper. Use `--delete` only when the remote vault must exactly mirror the
-local source. The default exclusions include editor metadata, repositories,
-dependencies, raw inputs, clippings, and designated private folders.
+wrapper. The launcher is stored under `.obsidian/`, which is itself excluded
+from synchronization, and uses `$HOME/.ssh/env_site_vaultsync`. The default
+exclusions include editor metadata, repositories, dependencies, raw inputs,
+clippings, vault `.env` files, temporary files, and designated private folders.
 
 ## Verification
 

@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { env } from "@/lib/config";
 import { retrieveChunks } from "@/lib/search";
+import type { ChatSource } from "@/lib/chat/stream";
 
 const systemPrompt = `You are a private knowledge-base assistant for an Obsidian vault.
 
@@ -16,9 +17,18 @@ Do not claim that a source says something unless the supplied context supports i
 
 Be concise, structured, and practical.`;
 
-export async function answerFromVault(question: string, rawAllowed = false) {
+type VaultAnswerChunk = {
+  text?: string;
+  tokenUsage?: object;
+};
+
+async function* answerText(text: string): AsyncGenerator<VaultAnswerChunk> {
+  yield { text };
+}
+
+export async function streamAnswerFromVault(question: string, rawAllowed = false, signal?: AbortSignal) {
   const chunks = await retrieveChunks(question, env.MAX_CHAT_CONTEXT_CHUNKS, rawAllowed);
-  const sources = chunks.map((chunk) => ({
+  const sources: ChatSource[] = chunks.map((chunk) => ({
     id: chunk.id,
     title: chunk.title,
     url: `/notes/${chunk.slug}${chunk.headingAnchor ? `#${chunk.headingAnchor}` : ""}`,
@@ -28,19 +38,18 @@ export async function answerFromVault(question: string, rawAllowed = false) {
 
   if (chunks.length === 0) {
     return {
-      answer: "В хранилище нет достаточно информации, чтобы надежно ответить на этот вопрос.",
+      answerStream: answerText("В хранилище нет достаточно информации, чтобы надежно ответить на этот вопрос."),
       sources,
       model: env.CHAT_MODEL,
-      tokenUsage: undefined,
     };
   }
 
   if (!env.OPENAI_BASE_URL || !env.OPENAI_API_KEY) {
+    const answer = `Найден релевантный контекст, но OPENAI_BASE_URL/OPENAI_API_KEY не настроены. Ближайшие источники:\n\n${sources.map((source) => `- [${source.title}](${source.url})`).join("\n")}`;
     return {
-      answer: `Найден релевантный контекст, но OPENAI_BASE_URL/OPENAI_API_KEY не настроены. Ближайшие источники:\n\n${sources.map((source) => `- [${source.title}](${source.url})`).join("\n")}`,
+      answerStream: answerText(answer),
       sources,
       model: env.CHAT_MODEL,
-      tokenUsage: undefined,
     };
   }
 
@@ -49,19 +58,31 @@ export async function answerFromVault(question: string, rawAllowed = false) {
     .map((chunk, index) => `[${index + 1}] ${chunk.title}\nURL: /notes/${chunk.slug}${chunk.headingAnchor ? `#${chunk.headingAnchor}` : ""}\n${chunk.content}`)
     .join("\n\n---\n\n");
 
-  const completion = await client.chat.completions.create({
-    model: env.CHAT_MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: `Вопрос: ${question}\n\nКонтекст хранилища:\n${context}` },
-    ],
-    temperature: 0.2,
-  });
+  const completion = await client.chat.completions.create(
+    {
+      model: env.CHAT_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Вопрос: ${question}\n\nКонтекст хранилища:\n${context}` },
+      ],
+      temperature: 0.2,
+      stream: true,
+      stream_options: { include_usage: true },
+    },
+    { signal },
+  );
+
+  async function* streamCompletion(): AsyncGenerator<VaultAnswerChunk> {
+    for await (const chunk of completion) {
+      const text = chunk.choices[0]?.delta.content ?? chunk.choices[0]?.delta.refusal ?? "";
+      if (text) yield { text };
+      if (chunk.usage) yield { tokenUsage: chunk.usage };
+    }
+  }
 
   return {
-    answer: completion.choices[0]?.message.content ?? "Не удалось сформировать ответ.",
+    answerStream: streamCompletion(),
     sources,
     model: env.CHAT_MODEL,
-    tokenUsage: completion.usage,
   };
 }

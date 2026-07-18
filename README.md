@@ -84,16 +84,25 @@ as root on the VPS with a token limited to `read:packages`.
 
 ## Upload vault data
 
-Upload the local Environment vault to the production vault mount and reindex the site:
+From the Environment vault directory or Obsidian Terminal, always preview first:
 
 ```bash
-npm run upload:vault -- \
-  --host 23.88.51.68 \
-  --user vaultsync \
-  --identity "$HOME/.ssh/env_site_vaultsync"
+./.obsidian/scripts/upload-vault --dry-run
 ```
 
-Use `--dry-run` before the first upload to preview the transfer. Add `--delete` when you want the remote `/srv/obsidian-vault` mirror to remove files that no longer exist locally. The `vaultsync` account can write only the vault tree and reindexes through `/usr/local/sbin/env-site-reindex`; it is not a member of the Docker group. The script uses `VAULT_EXCLUDE_GLOBS` by default, including private folders such as `10_Я/**` and `40_Люди/**`.
+Upload and reindex after reviewing the preview:
+
+```bash
+./.obsidian/scripts/upload-vault
+```
+
+Mirror deletions only when explicitly intended:
+
+```bash
+./.obsidian/scripts/upload-vault --delete
+```
+
+The launcher lives inside `.obsidian/`, which is excluded from synchronization. It uses the dedicated `vaultsync` identity at `$HOME/.ssh/env_site_vaultsync`. The account can write only the vault tree and reindexes through `/usr/local/sbin/env-site-reindex`; it is not a member of the Docker group. Default exclusions cover raw inputs, clippings, editor metadata, repositories, dependencies, vault `.env` files, temporary files, and designated private folders such as `10_Я/**` and `40_Люди/**`.
 
 For local image builds, use:
 

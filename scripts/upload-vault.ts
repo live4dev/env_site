@@ -20,12 +20,17 @@ const defaultVaultRoot = "/Users/legonaut/Documents/Obsidian/Environment";
 const defaultExcludes = [
   "raw/**",
   "Clippings/**",
+  ".env",
+  ".env.*",
   ".git/**",
   ".obsidian/**",
   ".trash/**",
   "node_modules/**",
   "10_Я/**",
   "40_Люди/**",
+  ".DS_Store",
+  "*.tmp",
+  "*.swp",
 ];
 
 function env(name: string, fallback = "") {
@@ -182,7 +187,9 @@ async function main() {
     "-p",
     options.port,
     remote,
-    `mkdir -p ${quoteShell(options.remotePath)}`,
+    options.dryRun
+      ? `test -d ${quoteShell(options.remotePath)}`
+      : `mkdir -p ${quoteShell(options.remotePath)}`,
   ]);
 
   const sshTransport = ["ssh", "-p", options.port, ...sshOptions]
